@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sopa de Letras: Salud y Bienestar Emocional</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e0f2fe; /* Light blue background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        #game-container {
+            background-color: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            max-width: 700px; /* Adjusted max-width for smaller grid */
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        #word-search-grid {
+            display: grid;
+            border: 2px solid #60a5fa; /* Blue border */
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: #ffffff;
+        }
+        .grid-cell {
+            width: 40px; /* Slightly larger cells for better touch on smaller grid */
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem; /* Adjusted font size */
+            font-weight: 600;
+            color: #334155; /* Dark gray text */
+            cursor: pointer;
+            user-select: none; /* Prevent text selection */
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .grid-cell.selected {
+            background-color: #93c5fd; /* Light blue on selection */
+            color: #ffffff;
+        }
+        .grid-cell.found {
+            background-color: #34d399; /* Green for found words */
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .grid-cell.solution {
+            background-color: #fcd34d; /* Yellow for solutions */
+            color: #334155;
+            font-weight: 700;
+        }
+        .word-list-item {
+            font-size: 1.1rem;
+            color: #475569; /* Gray text */
+            transition: color 0.2s ease;
+        }
+        .word-list-item.found-word {
+            color: #34d399; /* Green for found words in list */
+            text-decoration: line-through;
+            font-weight: 600;
+        }
+        .button-style {
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px; /* Fully rounded */
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .button-primary {
+            background-color: #60a5fa; /* Blue */
+            color: #ffffff;
+            border: none;
+        }
+        .button-primary:hover {
+            background-color: #3b82f6; /* Darker blue on hover */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+        .button-secondary {
+            background-color: #fcd34d; /* Yellow */
+            color: #334155;
+            border: none;
+        }
+        .button-secondary:hover {
+            background-color: #fbbf24; /* Darker yellow on hover */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+        #explanation-box {
+            background-color: #e2e8f0; /* Light gray */
+            border-radius: 15px;
+            padding: 1rem;
+            text-align: center;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: #475569;
+            width: 100%;
+            max-width: 500px;
+        }
+        @media (min-width: 768px) {
+            #game-container {
+                flex-direction: row;
+                justify-content: space-around;
+                align-items: flex-start;
+                padding: 2rem;
+            }
+            #left-panel, #right-panel {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 1.5rem;
+            }
+            #word-search-grid {
+                margin-top: 0;
+            }
+            #explanation-box {
+                margin-top: 1rem;
+            }
+        }
+        @media (max-width: 767px) {
+            .grid-cell {
+                width: 32px; /* Smaller cells for mobile */
+                height: 32px;
+                font-size: 1rem;
+            }
+            #game-container {
+                padding: 1rem;
+            }
+            #explanation-box {
+                font-size: 1rem;
+            }
+            .button-style {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="left-panel" class="flex flex-col items-center gap-4">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-blue-700 mb-2 text-center">
+                Sopa de Letras
+            </h1>
+            <p class="text-lg md:text-xl font-semibold text-gray-700 mb-4 text-center">
+                ¡Encuentra las palabras de Salud y Bienestar Emocional!
+            </p>
+            <div id="word-list" class="bg-blue-100 p-4 rounded-lg shadow-inner w-full max-w-xs md:max-w-none">
+                <h2 class="text-xl font-bold text-blue-800 mb-2 text-center">Palabras a buscar:</h2>
+                <ul class="grid grid-cols-2 gap-2 text-center" id="words-to-find">
+                    <!-- Words will be injected here by JS -->
+                </ul>
+            </div>
+            <div id="buttons" class="flex flex-wrap justify-center gap-4 mt-4">
+                <button id="restart-button" class="button-style button-primary">Reiniciar</button>
+                <button id="solve-button" class="button-style button-secondary">Mostrar Soluciones</button>
+            </div>
+        </div>
+
+        <div id="right-panel" class="flex flex-col items-center gap-4">
+            <div id="word-search-grid" class="mt-4 md:mt-0">
+                <!-- Grid cells will be injected here by JS -->
+            </div>
+            <div id="explanation-box" class="mt-4">
+                <p>Haz clic o arrastra para seleccionar una palabra.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Define the words and their explanations
+        const wordsData = [
+            { word: "ALEGRIA", explanation: "Sentir mucha felicidad y ganas de sonreír." },
+            { word: "RESPETO", explanation: "Tratar a los demás con consideración y valorar sus diferencias." },
+            { word: "AMISTAD", explanation: "El cariño y apoyo que sientes por tus amigos." },
+            { word: "MIEDO", explanation: "Una emoción que sientes cuando algo te asusta o te preocupa." },
+            { word: "TRISTEZA", explanation: "Una emoción que sientes cuando estás decaído o extrañas algo." },
+            { word: "DESCANSO", explanation: "Tomar un tiempo para relajarte y recuperar energías." },
+            { word: "EMOCIONES", explanation: "Lo que sentimos, como alegría, tristeza o enojo." },
+            { word: "AMOR", explanation: "Sentimiento de gran cariño y afecto por alguien o algo." },
+            { word: "CALMA", explanation: "Estar tranquilo y en paz, sin preocupaciones." },
+            { word: "ENOJO", explanation: "Una emoción que sientes cuando algo te molesta mucho." }
+        ];
+
+        const GRID_SIZE = 10; // 10x10 grid
+        let grid = [];
+        let foundWords = new Set();
+        let selectedCells = [];
+        let isSelecting = false;
+        let startCell = null;
+
+        const gridElement = document.getElementById('word-search-grid');
+        const wordListElement = document.getElementById('words-to-find');
+        const explanationBox = document.getElementById('explanation-box');
+        const restartButton = document.getElementById('restart-button');
+        const solveButton = document.getElementById('solve-button');
+
+        // Allowed directions: Horizontal (right), Vertical (down)
+        const allowedDirections = [
+            { dr: 0, dc: 1 },  // Horizontal (right)
+            { dr: 1, dc: 0 }   // Vertical (down)
+        ];
+
+
+        /**
+         * Initializes the game: creates grid, places words, fills empty cells, renders UI.
+         */
+        function initializeGame() {
+            grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(''));
+            foundWords.clear();
+            selectedCells = [];
+            isSelecting = false;
+            startCell = null;
+            explanationBox.innerHTML = "<p>Haz clic o arrastra para seleccionar una palabra.</p>";
+            solveButton.disabled = false; // Enable solve button on restart
+
+            placeWords();
+            fillEmptyCells();
+            renderGrid();
+            renderWordList();
+        }
+
+        /**
+         * Attempts to place all words onto the grid.
+         */
+        function placeWords() {
+            // Sort words by length descending to place longer words first
+            const sortedWords = [...wordsData].sort((a, b) => b.word.length - a.word.length);
+
+            sortedWords.forEach(wordData => {
+                const word = wordData.word;
+                let placed = false;
+                let attempts = 0;
+                const maxAttempts = 500; // Prevent infinite loops
+
+                while (!placed && attempts < maxAttempts) {
+                    attempts++;
+                    const dir = allowedDirections[Math.floor(Math.random() * allowedDirections.length)];
+                    const row = Math.floor(Math.random() * GRID_SIZE);
+                    const col = Math.floor(Math.random() * GRID_SIZE);
+
+                    if (canPlaceWord(word, row, col, dir)) {
+                        placeWord(word, row, col, dir);
+                        placed = true;
+                    }
+                }
+                if (!placed) {
+                    console.warn(`Could not place word: ${word}`);
+                }
+            });
+        }
+
+        /**
+         * Checks if a word can be placed at a given position and direction without conflicts.
+         * @param {string} word - The word to place.
+         * @param {number} startRow - Starting row.
+         * @param {number} startCol - Starting column.
+         * @param {object} dir - Direction object {dr, dc}.
+         * @returns {boolean} - True if the word can be placed, false otherwise.
+         */
+        function canPlaceWord(word, startRow, startCol, dir) {
+            for (let i = 0; i < word.length; i++) {
+                const r = startRow + i * dir.dr;
+                const c = startCol + i * dir.dc;
+
+                // Check boundaries
+                if (r < 0 || r >= GRID_SIZE || c < 0 || c >= GRID_SIZE) {
+                    return false;
+                }
+                // Check for conflicts with existing letters
+                if (grid[r][c] !== '' && grid[r][c] !== word[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /**
+         * Places a word onto the grid.
+         * @param {string} word - The word to place.
+         * @param {number} startRow - Starting row.
+         * @param {number} startCol - Starting column.
+         * @param {object} dir - Direction object {dr, dc}.
+         */
+        function placeWord(word, startRow, startCol, dir) {
+            for (let i = 0; i < word.length; i++) {
+                const r = startRow + i * dir.dr;
+                const c = startCol + i * dir.dc;
+                grid[r][c] = word[i];
+            }
+        }
+
+        /**
+         * Fills all empty cells in the grid with random uppercase letters.
+         */
+        function fillEmptyCells() {
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (grid[r][c] === '') {
+                        grid[r][c] = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A-Z
+                    }
+                }
+            }
+        }
+
+        /**
+         * Renders the word search grid in the DOM.
+         */
+        function renderGrid() {
+            gridElement.innerHTML = ''; // Clear previous grid
+            gridElement.style.gridTemplateColumns = `repeat(${GRID_SIZE}, auto)`;
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('grid-cell', 'flex', 'items-center', 'justify-center', 'rounded-md');
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.textContent = grid[r][c];
+                    gridElement.appendChild(cell);
+                }
+            }
+        }
+
+        /**
+         * Renders the list of words to find.
+         */
+        function renderWordList() {
+            wordListElement.innerHTML = ''; // Clear previous list
+            wordsData.forEach(wordData => {
+                const li = document.createElement('li');
+                li.id = `word-${wordData.word}`;
+                li.classList.add('word-list-item', 'font-semibold', 'text-gray-700');
+                if (foundWords.has(wordData.word)) {
+                    li.classList.add('found-word');
+                }
+                li.textContent = wordData.word;
+                wordListElement.appendChild(li);
+            });
+        }
+
+        /**
+         * Handles the start of a selection (mousedown or touchstart).
+         * @param {Event} e - The event object.
+         */
+        function handleSelectionStart(e) {
+            isSelecting = true;
+            const targetCell = e.target.closest('.grid-cell');
+            if (!targetCell) return;
+
+            clearSelection(); // Clear any previous temporary selection
+            startCell = {
+                row: parseInt(targetCell.dataset.row),
+                col: parseInt(targetCell.dataset.col)
+            };
+            selectedCells.push(startCell);
+            targetCell.classList.add('selected');
+            explanationBox.innerHTML = "<p>Sigue arrastrando para seleccionar.</p>";
+
+            // Prevent default touch behavior (e.g., scrolling)
+            if (e.type === 'touchstart') {
+                e.preventDefault();
+            }
+        }
+
+        /**
+         * Handles the movement during selection (mousemove or touchmove).
+         * @param {Event} e - The event object.
+         */
+        function handleSelectionMove(e) {
+            if (!isSelecting) return;
+
+            let clientX, clientY;
+            if (e.type === 'touchmove') {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            const targetCell = document.elementFromPoint(clientX, clientY);
+            const gridCell = targetCell ? targetCell.closest('.grid-cell') : null;
+
+            if (gridCell) {
+                const currentRow = parseInt(gridCell.dataset.row);
+                const currentCol = parseInt(gridCell.dataset.col);
+
+                // Only update if the cell is different from the last one in selectedCells
+                if (selectedCells.length === 0 ||
+                    selectedCells[selectedCells.length - 1].row !== currentRow ||
+                    selectedCells[selectedCells.length - 1].col !== currentCol) {
+
+                    // Clear and re-highlight path from startCell to currentCell
+                    clearSelection();
+                    selectedCells = getCellsInPath(startCell.row, startCell.col, currentRow, currentCol);
+                    selectedCells.forEach(cell => {
+                        const domCell = gridElement.querySelector(`[data-row="${cell.row}"][data-col="${cell.col}"]`);
+                        if (domCell) domCell.classList.add('selected');
+                    });
+                }
+            }
+            if (e.type === 'touchmove') {
+                e.preventDefault();
+            }
+        }
+
+        /**
+         * Handles the end of a selection (mouseup or touchend).
+         * @param {Event} e - The event object.
+         */
+        function handleSelectionEnd(e) {
+            if (!isSelecting) return;
+            isSelecting = false;
+
+            if (selectedCells.length > 0) {
+                checkSelectedWord();
+            }
+            startCell = null;
+            // Do not clear selection immediately, let checkSelectedWord handle it or keep for visual feedback
+        }
+
+        /**
+         * Clears the 'selected' class from all cells.
+         */
+        function clearSelection() {
+            document.querySelectorAll('.grid-cell.selected').forEach(cell => {
+                cell.classList.remove('selected');
+            });
+            selectedCells = [];
+        }
+
+        /**
+         * Gets all cells forming a straight line path between two points.
+         * Only allows horizontal, vertical, and diagonal (45 degrees) paths.
+         * @param {number} r1 - Start row.
+         * @param {number} c1 - Start column.
+         * @param {number} r2 - End row.
+         * @param {number} c2 - End column.
+         * @returns {Array<object>} - Array of cell objects {row, col}.
+         */
+        function getCellsInPath(r1, c1, r2, c2) {
+            const path = [];
+            const dr = r2 - r1;
+            const dc = c2 - c1;
+
+            if (dr === 0 && dc === 0) { // Single cell selected
+                path.push({ row: r1, col: c1 });
+                return path;
+            }
+
+            // Check if it's a straight line (horizontal, vertical, or 45-degree diagonal)
+            // Updated to only allow horizontal and vertical based on user request
+            if (dr === 0 || dc === 0) {
+                const steps = Math.max(Math.abs(dr), Math.abs(dc));
+                const stepDr = dr === 0 ? 0 : dr / steps;
+                const stepDc = dc === 0 ? 0 : dc / steps;
+
+                for (let i = 0; i <= steps; i++) {
+                    path.push({
+                        row: r1 + i * stepDr,
+                        col: c1 + i * stepDc
+                    });
+                }
+            }
+            return path;
+        }
+
+        /**
+         * Checks if the currently selected cells form a valid word.
+         */
+        function checkSelectedWord() {
+            if (selectedCells.length === 0) {
+                explanationBox.innerHTML = "<p>Haz clic o arrastra para seleccionar una palabra.</p>";
+                return;
+            }
+
+            let currentWord = '';
+            selectedCells.forEach(cell => {
+                currentWord += grid[cell.row][cell.col];
+            });
+
+            const foundWordData = wordsData.find(wd => wd.word === currentWord);
+
+            if (foundWordData && !foundWords.has(foundWordData.word)) {
+                foundWords.add(foundWordData.word);
+                selectedCells.forEach(cell => {
+                    const domCell = gridElement.querySelector(`[data-row="${cell.row}"][data-col="${cell.col}"]`);
+                    if (domCell) {
+                        domCell.classList.remove('selected');
+                        domCell.classList.add('found');
+                    }
+                });
+                explanationBox.innerHTML = `<p><span class="font-bold text-blue-700">${foundWordData.word}:</span> ${foundWordData.explanation}</p>`;
+                renderWordList(); // Update word list to mark as found
+
+                if (foundWords.size === wordsData.length) {
+                    explanationBox.innerHTML = "<p class='text-green-700 font-bold'>¡Felicidades! ¡Encontraste todas las palabras!</p>";
+                    solveButton.disabled = true; // Disable solve button when all words are found
+                }
+            } else {
+                // If not a valid word or already found, clear selection
+                clearSelection();
+                explanationBox.innerHTML = "<p>Intenta de nuevo. ¡No es una palabra o ya la encontraste!</p>";
+            }
+        }
+
+        /**
+         * Event listener for the restart button.
+         */
+        restartButton.addEventListener('click', () => {
+            initializeGame();
+        });
+
+        /**
+         * Event listener for the solve button.
+         */
+        solveButton.addEventListener('click', () => {
+            clearSelection(); // Clear any ongoing selection
+            explanationBox.innerHTML = "<p>Aquí están las soluciones. ¡Intenta encontrarlas tú mismo la próxima vez!</p>";
+            solveButton.disabled = true; // Disable button after showing solutions
+
+            wordsData.forEach(wordData => {
+                const word = wordData.word;
+                // Find where the word is placed in the grid
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    for (let c = 0; c < GRID_SIZE; c++) {
+                        for (const dir of allowedDirections) {
+                            if (canPlaceWord(word, r, c, dir)) { // Check if the word *could* start here
+                                let potentialWord = '';
+                                let cellsToHighlight = [];
+                                for (let i = 0; i < word.length; i++) {
+                                    const currR = r + i * dir.dr;
+                                    const currC = c + i * dir.dc;
+                                    if (currR < GRID_SIZE && currC < GRID_SIZE && currR >= 0 && currC >= 0) {
+                                        potentialWord += grid[currR][currC];
+                                        cellsToHighlight.push({ row: currR, col: currC });
+                                    } else {
+                                        potentialWord = ''; // Out of bounds
+                                        break;
+                                    }
+                                }
+
+                                if (potentialWord === word) {
+                                    cellsToHighlight.forEach(cell => {
+                                        const domCell = gridElement.querySelector(`[data-row="${cell.row}"][data-col="${cell.col}"]`);
+                                        if (domCell) {
+                                            if (!domCell.classList.contains('found')) { // Don't override already found words
+                                                domCell.classList.add('solution');
+                                            }
+                                        }
+                                    });
+                                    // Mark word as found in the list
+                                    if (!foundWords.has(word)) {
+                                        foundWords.add(word);
+                                        document.getElementById(`word-${word}`).classList.add('found-word');
+                                    }
+                                    return; // Move to next word
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+
+        // Event listeners for grid interaction (mouse and touch)
+        gridElement.addEventListener('mousedown', handleSelectionStart);
+        gridElement.addEventListener('mousemove', handleSelectionMove);
+        gridElement.addEventListener('mouseup', handleSelectionEnd);
+        gridElement.addEventListener('mouseleave', handleSelectionEnd); // End selection if mouse leaves grid
+
+        gridElement.addEventListener('touchstart', handleSelectionStart);
+        gridElement.addEventListener('touchmove', handleSelectionMove);
+        gridElement.addEventListener('touchend', handleSelectionEnd);
+        gridElement.addEventListener('touchcancel', handleSelectionEnd); // Handle touch being interrupted
+
+        // Initialize the game when the page loads
+        window.onload = initializeGame;
+    </script>
+</body>
+</html>
